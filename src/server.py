@@ -11,18 +11,13 @@ origins = [
     "*",
 ]
 
-# Allow these methods to be used
-methods = ["GET", "POST", "PUT", "DELETE"]
-
-# Only these headers are allowed
-headers = ["Content-Type", "Authorization"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=methods,
-    allow_headers=headers,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 

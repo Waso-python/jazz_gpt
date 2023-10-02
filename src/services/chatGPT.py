@@ -2,13 +2,13 @@ import openai
 import textwrap
 import os
 from settings.config import CHATGPT_TOKEN
+from src.services.settings_gpt import max_token_count
 
 openai.api_key = CHATGPT_TOKEN
 
-max_token_count = 6096
-
 
 def _get_result_psyhologic(text, meeting_topic):
+    '''внутренняя функция которая результирует психологический портрет участников'''
     result = ""
     
     messages = [
@@ -37,6 +37,7 @@ def _get_result_psyhologic(text, meeting_topic):
     return result
 
 def _get_result_links(text):
+    '''внутренняя функция которая результирует распознанные ссылки'''
     result = ''
     messages = [
                 {
@@ -57,16 +58,17 @@ def _get_result_links(text):
         presence_penalty=0	
     )
     result = response['choices'][0]['message']['content']
-    print(result)
     return result
 
 
 def _split_text_into_chunks(text, lines_per_chunk):
+    '''внутренняя функция которая генерирует части файла'''
     lines = text.strip().split('\n')
     for i in range(0, len(lines), lines_per_chunk):
         yield '\n'.join(lines[i:i + lines_per_chunk])
 
 def _get_result_ideas(analysis_result, meeting_topic):
+    '''внутренняя функция которая результирует распознанные идеи'''
     result = ''
     messages = [
                 {
@@ -87,10 +89,10 @@ def _get_result_ideas(analysis_result, meeting_topic):
         presence_penalty=0	
     )
     result = response['choices'][0]['message']['content']
-    print(result)
     return result
 
 def get_ideas(content_text, meeting_topic):
+    '''функция которая распознает ссылки'''
     analysis_result = ""
     for chunk in _split_text_into_chunks(content_text, 40):
         messages = [
@@ -112,14 +114,11 @@ def get_ideas(content_text, meeting_topic):
             presence_penalty=0	
         )
         analysis_result += ('\n'+ response['choices'][0]['message']['content'])
-        print(analysis_result)
-        print(response['usage']['prompt_tokens'])
-        print(response['usage']['completion_tokens'])
-        print(response['usage']['total_tokens'])
     return _get_result_ideas(analysis_result, meeting_topic)
 
 
 def get_psyhologic(content_text, meeting_topic):
+    '''функция которая распознает психологические портреты участников'''
     result = ""
     for chunk in _split_text_into_chunks(content_text, 40):
         messages = [
@@ -141,10 +140,6 @@ def get_psyhologic(content_text, meeting_topic):
             presence_penalty=0	
         )
         result += ('\n'+ response['choices'][0]['message']['content'])
-        print(result)
-        print(response['usage']['prompt_tokens'])
-        print(response['usage']['completion_tokens'])
-        print(response['usage']['total_tokens'])
     return _get_result_psyhologic(result, meeting_topic)
 
 def get_links(content_text):
@@ -169,10 +164,6 @@ def get_links(content_text):
             presence_penalty=0	
         )
         links_result += ('\n'+ response['choices'][0]['message']['content'])
-        print(links_result)
-        print(response['usage']['prompt_tokens'])
-        print(response['usage']['completion_tokens'])
-        print(response['usage']['total_tokens'])
     return _get_result_links(links_result)
 
 

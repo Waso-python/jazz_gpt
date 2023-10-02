@@ -3,8 +3,11 @@ from fastapi.security.api_key import APIKey
 from src.services.chatGPT import get_ideas, get_links, get_psyhologic
 from src.services import auth
 from src.services.file_utils import save_file, generate_file_id
-from src.services.get_users import get_unique_participants
+from src.services.get_users import get_unique_participants, replace_id_by_name
+from src.db.db_utils import Database, get_users_by_file_id
 import json
+import traceback
+from settings.config import DB_NAME
 router = APIRouter()
 
 
@@ -12,43 +15,87 @@ router = APIRouter()
 async def info(api_key: APIKey = Depends(auth.get_api_key)):
     return {"default variable": api_key}
 
-@router.post("/upload_file/")
+@router.post("/upload_file")
 async def upload_file(file: UploadFile, api_key: APIKey = Depends(auth.get_api_key)):
     try:
         file_id = generate_file_id()
         await save_file(file, file_id)
-        return {"file_id": file_id, "users":get_unique_participants(file_id)}
+        db_users = Database(DB_NAME)
+        db_users.open()
+        unique_users = get_unique_participants(file_id)
+        for k, v in unique_users.items():
+            
+            db_users.insert_data(file_id,k,v)
+        db_users.close()
+        return {"file_id": file_id, "users":unique_users}
     except Exception as ex:
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))
 
-@router.post("/analyze_text/")
-async def analyze_text(file_id: UploadFile, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
+# @router.post("/analyze_text")
+# async def analyze_text(file: UploadFile, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
+#     try:
+#         if not meeting_topic:
+#             meeting_topic = 'обсуждение рабочих вопросов'
+#         content = await file.read()
+#         content_text = content.decode()
+#         ideas = json.loads(get_ideas(content_text, meeting_topic))
+#         links = json.loads(get_links(content_text)).get("links")
+#         psyhologic = get_psyhologic(content_text, meeting_topic)
+        
+#         return {"ideas": ideas or [], 
+#                 "links": links or [],
+#                 "psyhologic": psyhologic or []}
+#     except Exception as ex:
+#         print(traceback.format_exc())
+#         raise HTTPException(status_code=500, detail=str(ex))
+
+@router.post("/get_ideas")
+async def ideas(file_id: str, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
     try:
         if not meeting_topic:
             meeting_topic = 'обсуждение рабочих вопросов'
-        content = await file.read()
-        content_text = content.decode()
-        ideas = json.loads(get_ideas(content_text, meeting_topic))
-        links = json.loads(get_links(content_text)).get("links")
-        psyhologic = get_psyhologic(content_text, meeting_topic)
+        with open(file_id, 'r') as file: 
+            content = file.read()
+        ideas = json.loads(get_ideas(content, meeting_topic))
+        result = replace_id_by_name(ideas,file_id)
         
-        return {"ideas": ideas or [], 
-                "links": links or [],
-                "psyhologic": psyhologic or []}
+        return {"ideas": result or []}
     except Exception as ex:
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))
-
-@router.post("/get_ideas/")
-async def get_ideas(file_id: str, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
+    
+@router.post("/get_psyhologic")
+async def psyhologic(file_id: str, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
     try:
         if not meeting_topic:
             meeting_topic = 'обсуждение рабочих вопросов'
-        with open(file_id) as file:
-            content = await file.read()
-        content_text = content.decode()
-        ideas = json.loads(get_ideas(content_text, meeting_topic))
-
+        with open(file_id, 'r') as file: 
+            content = file.read()
+        psyhologic = json.loads(get_psyhologic(content, meeting_topic))
+        result = replace_id_by_name(psyhologic,file_id)
         
-        return {"ideas": ideas or []}
+        return {"psyhologic": result or []}
     except Exception as ex:
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))
+
+@router.post("/get_links")
+async def links(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+    try:
+        with open(file_id, 'r') as file: 
+            content = file.read()
+        links = json.loads(get_links(content)).get("links")
+                
+        return {"links": links or []}
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+# @router.post("/db")
+# async def upload_file(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+#     try:
+#         return get_users_by_file_id(file_id)
+#     except Exception as ex:
+#         print(traceback.format_exc())
+#         raise HTTPException(status_code=500, detail=str(ex))
