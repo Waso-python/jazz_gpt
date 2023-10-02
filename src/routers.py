@@ -6,6 +6,8 @@ from src.services.file_utils import save_file, generate_file_id
 from src.services.get_users import get_unique_participants, replace_id_by_name
 from src.db.db_utils import Database, get_users_by_file_id
 from src.services.text_analyzer.detector_bad_word import BadThemeAnalyzer
+from src.services.text_analyzer.main_emotion import EmotitonAnalyzer
+from src.services.text_analyzer.mat_detection import ClearMatJazz
 import json
 import traceback
 from settings.config import DB_NAME
@@ -53,6 +55,30 @@ async def bad_theme(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
     try:
         theme = BadThemeAnalyzer()
         result = theme.file_analyz(file_id)
+        
+        return result
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+@router.post("/emotion")
+async def bad_theme(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+    '''Получение эмоционального настроя участников в течении разговора'''
+    try:
+        emotions = EmotitonAnalyzer()
+        result = emotions.file2info(file_id)
+        
+        return result
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+@router.post("/mat_detect")
+async def bad_theme(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+    '''Определение нецензурной лексики'''
+    try:
+        mat_detects = ClearMatJazz()
+        result = mat_detects.clear_file(file_id)
         
         return result
     except Exception as ex:
