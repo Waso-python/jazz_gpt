@@ -8,6 +8,7 @@ from src.db.db_utils import Database, get_users_by_file_id
 from src.services.text_analyzer.detector_bad_word import BadThemeAnalyzer
 from src.services.text_analyzer.main_emotion import EmotitonAnalyzer
 from src.services.text_analyzer.mat_detection import ClearMatJazz
+from src.services.text_analyzer.parasit_detection import ClearParazitWord
 import json
 import traceback
 from settings.config import DB_NAME
@@ -79,6 +80,18 @@ async def bad_theme(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
     try:
         mat_detects = ClearMatJazz()
         result = mat_detects.clear_file(file_id)
+        
+        return result
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+@router.post("/parasit")
+async def bad_theme(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+    '''Определение слов паразитов'''
+    try:
+        parasits = ClearParazitWord()
+        result = parasits.clear_file(file_id)
         
         return result
     except Exception as ex:
