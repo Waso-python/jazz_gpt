@@ -5,19 +5,73 @@ from settings.config import CHATGPT_TOKEN
 
 openai.api_key = CHATGPT_TOKEN
 
-max_token_count = 3096
+max_token_count = 6096
+
+
+def _get_result_psyhologic(text, meeting_topic):
+    result = ""
+    
+    messages = [
+        {
+            "role": "system",
+            "content": f"Ты психолог в команде, тебе дается на анализ сформулированные тобой характеристики участников стенограммы совещания по теме \"{meeting_topic}\", ты составляешь психологический портрет участников по заданной теме и результат выдаешь в формате json, где ключ это имя участника, а значение это подробный психологический портрет участника по итогам встречи"
+        },
+        {
+            "role": "user",
+            "content": text
+        }
+    ]
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-16k",
+        messages=messages,
+        temperature=1,
+        max_tokens=max_token_count,
+        frequency_penalty=0,
+        presence_penalty=0	
+    )
+    result = response['choices'][0]['message']['content']
+    print(result)
+    print(response['usage']['prompt_tokens'])
+    print(response['usage']['completion_tokens'])
+    print(response['usage']['total_tokens'])
+    return result
+
+def _get_result_links(text):
+    result = ''
+    messages = [
+                {
+                    "role": "system",
+                    "content": f"ты парсер данных, тебе нужно выделить из представленного текста ссылки. вывод сделай с форматированием json,где ключ = links, а значение это список ссылок"
+                },
+                {
+                    "role": "user",
+                    "content": text
+                }
+            ]
+    response = openai.ChatCompletion.create(
+        model="gpt-3.5-turbo-16k",
+        messages=messages,
+        temperature=1,
+        max_tokens=max_token_count,
+        frequency_penalty=0,
+        presence_penalty=0	
+    )
+    result = response['choices'][0]['message']['content']
+    print(result)
+    return result
+
 
 def _split_text_into_chunks(text, lines_per_chunk):
     lines = text.strip().split('\n')
     for i in range(0, len(lines), lines_per_chunk):
         yield '\n'.join(lines[i:i + lines_per_chunk])
 
-def get_result_ideas(analysis_result):
+def _get_result_ideas(analysis_result, meeting_topic):
     result = ''
     messages = [
                 {
                     "role": "system",
-                    "content": "Ты аналитик в команде разработчиков, тебе даются на анализ идеи, сформулированные chatgpt из фразы стенограммы совещания по теме \"проектирование MVP продукта для анализа стенограмм совещания\", тебе нужно проанализировать распознанные идеи  и сгруппировать по авторам. вывод сделай с форматированием html для вставки во фронтенд"
+                    "content": f"Ты аналитик в команде, тебе даются на анализ идеи, сформулированные chatgpt из фразы стенограммы совещания по теме \"{meeting_topic}\", тебе нужно выделить из распознанных идей относящиеся к теме разговора  и сгруппировать по авторам. вывод сделай с форматированием json, где ключ это имя участника а значение список идей"
                 },
                 {
                     "role": "user",
@@ -42,7 +96,7 @@ def get_ideas(content_text, meeting_topic):
         messages = [
             {
                 "role": "system",
-                "content": f"Ты аналитик в команде разработчиков, тебе даются на анализ  фразы из стенограммы совещания по теме \"{meeting_topic}\", ты выделяешь идеи участников по заданной теме и создаешь список идей с указанием автора в виде - (автор) - (идея)"
+                "content": f"Ты аналитик, тебе даются на анализ  фразы из стенограммы совещания по теме \"{meeting_topic}\", ты выделяешь идеи участников по заданной теме и создаешь список идей или основных тем с указанием автора в виде - (автор) - (идея)"
             },
             {
                 "role": "user",
@@ -52,7 +106,7 @@ def get_ideas(content_text, meeting_topic):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=messages,
-            temperature=0.5,
+            temperature=0,
             max_tokens=max_token_count,
             frequency_penalty=0,
             presence_penalty=0	
@@ -62,12 +116,12 @@ def get_ideas(content_text, meeting_topic):
         print(response['usage']['prompt_tokens'])
         print(response['usage']['completion_tokens'])
         print(response['usage']['total_tokens'])
-    return get_result_ideas(analysis_result)
+    return _get_result_ideas(analysis_result, meeting_topic)
 
 
 def get_psyhologic(content_text, meeting_topic):
     result = ""
-    for chunk in _split_text_into_chunks(content_text, 80):
+    for chunk in _split_text_into_chunks(content_text, 40):
         messages = [
             {
                 "role": "system",
@@ -81,7 +135,7 @@ def get_psyhologic(content_text, meeting_topic):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=messages,
-            temperature=1,
+            temperature=0,
             max_tokens=max_token_count,
             frequency_penalty=0,
             presence_penalty=0	
@@ -91,11 +145,11 @@ def get_psyhologic(content_text, meeting_topic):
         print(response['usage']['prompt_tokens'])
         print(response['usage']['completion_tokens'])
         print(response['usage']['total_tokens'])
-    return result
+    return _get_result_psyhologic(result, meeting_topic)
 
 def get_links(content_text):
     links_result = ""
-    for chunk in _split_text_into_chunks(content_text, 80):
+    for chunk in _split_text_into_chunks(content_text, 40):
         messages = [
             {
                 "role": "system",
@@ -109,7 +163,7 @@ def get_links(content_text):
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo-16k",
             messages=messages,
-            temperature=1,
+            temperature=0,
             max_tokens=max_token_count,
             frequency_penalty=0,
             presence_penalty=0	
@@ -119,7 +173,7 @@ def get_links(content_text):
         print(response['usage']['prompt_tokens'])
         print(response['usage']['completion_tokens'])
         print(response['usage']['total_tokens'])
-    return links_result
+    return _get_result_links(links_result)
 
 
 

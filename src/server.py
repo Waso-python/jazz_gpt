@@ -8,7 +8,7 @@ app = FastAPI()
 origins = [
     "http://localhost",
     "https://localhost:3000",
-    "http://10.53.171.212:3020",
+    "*",
 ]
 
 # Allow these methods to be used
