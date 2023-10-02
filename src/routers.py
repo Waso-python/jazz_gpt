@@ -5,6 +5,7 @@ from src.services import auth
 from src.services.file_utils import save_file, generate_file_id
 from src.services.get_users import get_unique_participants, replace_id_by_name
 from src.db.db_utils import Database, get_users_by_file_id
+from src.services.text_analyzer.detector_bad_word import BadThemeAnalyzer
 import json
 import traceback
 from settings.config import DB_NAME
@@ -32,24 +33,6 @@ async def upload_file(file: UploadFile, api_key: APIKey = Depends(auth.get_api_k
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))
 
-# @router.post("/analyze_text")
-# async def analyze_text(file: UploadFile, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
-#     try:
-#         if not meeting_topic:
-#             meeting_topic = 'обсуждение рабочих вопросов'
-#         content = await file.read()
-#         content_text = content.decode()
-#         ideas = json.loads(get_ideas(content_text, meeting_topic))
-#         links = json.loads(get_links(content_text)).get("links")
-#         psyhologic = get_psyhologic(content_text, meeting_topic)
-        
-#         return {"ideas": ideas or [], 
-#                 "links": links or [],
-#                 "psyhologic": psyhologic or []}
-#     except Exception as ex:
-#         print(traceback.format_exc())
-#         raise HTTPException(status_code=500, detail=str(ex))
-
 @router.post("/get_ideas")
 async def ideas(file_id: str, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
     try:
@@ -61,6 +44,17 @@ async def ideas(file_id: str, meeting_topic: str = None, api_key: APIKey = Depen
         result = replace_id_by_name(ideas,file_id)
         
         return {"ideas": result or []}
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+@router.post("/detector_bad_theme")
+async def bad_theme(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+    try:
+        theme = BadThemeAnalyzer()
+        result = theme.file_analyz(file_id)
+        
+        return result
     except Exception as ex:
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))
@@ -92,10 +86,3 @@ async def links(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))
     
-# @router.post("/db")
-# async def upload_file(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
-#     try:
-#         return get_users_by_file_id(file_id)
-#     except Exception as ex:
-#         print(traceback.format_exc())
-#         raise HTTPException(status_code=500, detail=str(ex))
