@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, HTTPException
 from fastapi.security.api_key import APIKey
 from src.services.chatGPT import get_ideas, get_links, get_psyhologic
+from src.services.gigaCHAT import giga_get_ideas, giga_get_links, giga_get_psyhologic
 from src.services import auth
 from src.services.file_utils import save_file, generate_file_id
 from src.services.get_users import get_unique_participants, replace_id_by_name
@@ -128,6 +129,33 @@ async def links(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
         links = json.loads(get_links(content)).get("links")
 
         return {"links": links or []}
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+
+@router.post("/get_links_giga")
+async def links_giga(file_id: str, api_key: APIKey = Depends(auth.get_api_key)):
+    try:
+        with open(file_id, "r") as file:
+            content = file.read()
+        links = json.loads(giga_get_links(content)).get("links")
+
+        return {"links": links or []}
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+@router.post("/get_psyhologic_giga")
+async def psyhologic_giga(file_id: str, meeting_topic: str = None, api_key: APIKey = Depends(auth.get_api_key)):
+    try:
+        if not meeting_topic:
+            meeting_topic = "обсуждение рабочих вопросов"
+        with open(file_id, "r") as file:
+            content = file.read()
+        
+        psyhologic = json.loads(giga_get_psyhologic(content, meeting_topic))
+        result = replace_id_by_name(psyhologic, file_id)
+        return {"psyhologic": result or []}
     except Exception as ex:
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))

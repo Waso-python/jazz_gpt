@@ -2,6 +2,16 @@ import re
 from src.db.db_utils import get_users_by_file_id
 
 
+def clean_text(text):
+    # Регулярное выражение для удаления технической информации
+    pattern = r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} - (.*?) \(распознано\)"
+    replacement = r"\1"
+
+    modified_text = re.sub(pattern, replacement, text)
+
+    return modified_text
+
+
 def get_unique_participants(filename):
     # Чтение содержимого файла
     with open(filename, "r", encoding="utf-8") as file:
