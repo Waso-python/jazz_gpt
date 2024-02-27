@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, HTTPException
 from fastapi.security.api_key import APIKey
 from src.services.chatGPT import get_ideas, get_links, get_psyhologic
-from src.services.gigaCHAT import giga_get_ideas, giga_get_links, giga_get_psyhologic
+from src.services.gigaCHAT import giga_get_ideas, giga_get_links, giga_get_psyhologic, giga_free_answer
 from src.services import auth
 from src.services.file_utils import save_file, generate_file_id
 from src.services.get_users import get_unique_participants, replace_id_by_name
@@ -156,6 +156,15 @@ async def psyhologic_giga(file_id: str, meeting_topic: str = None, api_key: APIK
         psyhologic = json.loads(giga_get_psyhologic(content, meeting_topic))
         result = replace_id_by_name(psyhologic, file_id)
         return {"psyhologic": result or []}
+    except Exception as ex:
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=str(ex))
+    
+@router.post("/giga_free_dialog")
+async def psyhologic_giga(question: str, api_key: APIKey = Depends(auth.get_api_key)):
+    try:
+        result = giga_free_answer(question)
+        return result
     except Exception as ex:
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(ex))

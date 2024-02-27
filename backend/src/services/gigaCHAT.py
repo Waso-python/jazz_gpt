@@ -12,6 +12,22 @@ from src.services.giga_utils import get_giga_creds
 Token = str(get_giga_creds())
 
 
+def giga_free_answer(question):
+    """Функция для ответа на произвольный вопрос"""
+    chat = GigaChat(temperature=0.5, access_token=Token, verify_ssl_certs=False)
+    messages = [
+        SystemMessage(
+        content=f'Ты банковский работник, ответь на заданный вопрос максимально лаконично'),
+        HumanMessage(
+        content=question
+        ),
+        ]
+    response = chat(messages).content
+   
+    result = response
+    return result
+
+
 def _giga_get_result_psyhologic(text, meeting_topic):
     """внутренняя функция которая результирует психологический портрет участников"""
     chat = GigaChat(temperature=0, access_token=Token, verify_ssl_certs=False)
