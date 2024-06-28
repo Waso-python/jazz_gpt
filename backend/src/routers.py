@@ -161,7 +161,7 @@ async def psyhologic_giga(file_id: str, meeting_topic: str = None, api_key: APIK
         raise HTTPException(status_code=500, detail=str(ex))
     
 @router.post("/giga_free_dialog")
-async def psyhologic_giga(question: str, api_key: APIKey = Depends(auth.get_api_key)):
+async def free_giga(question: str, api_key: APIKey = Depends(auth.get_api_key)):
     try:
         result = giga_free_answer(question)
         return result

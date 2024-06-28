@@ -7,6 +7,7 @@ access_token = APIKeyHeader(name="access_token", auto_error=False)
 
 
 async def get_api_key(access_token: str = Security(access_token)):
+    print(f'Acces token = {ACCESS_TOKEN}')
     if access_token == ACCESS_TOKEN:
         return access_token
     else:

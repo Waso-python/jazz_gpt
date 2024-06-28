@@ -9,12 +9,15 @@ from src.services.get_users import clean_text
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from src.services.giga_utils import get_giga_creds
 
-Token = str(get_giga_creds())
+def get_giga_token():
+    Token = str(get_giga_creds())
+    print(Token)
+    return Token
 
 
 def giga_free_answer(question):
     """Функция для ответа на произвольный вопрос"""
-    chat = GigaChat(temperature=0.5, access_token=Token, verify_ssl_certs=False)
+    chat = GigaChat(temperature=0.5, access_token=get_giga_token(), verify_ssl_certs=False)
     messages = [
         SystemMessage(
         content=f'Ты банковский работник, ответь на заданный вопрос максимально лаконично'),

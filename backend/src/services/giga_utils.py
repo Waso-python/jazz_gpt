@@ -44,11 +44,13 @@ def get_creds():
         data = {'scope': f'{GIGA_CHAT_SCOPE}'}
         r = requests.post('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', headers=headers, data=data, verify=prom_pem)
         json_response = r.text
+        print(json_response)
         return json_response
     else:
         print("service prom not access!!!")
 
 def get_giga_creds():
+    print('get giga creds')
     if is_token_expired():
         save_to_env(get_creds())
         creds = os.environ.get('GIGA_ACCESS_TOKEN')
